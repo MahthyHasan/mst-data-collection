@@ -123,42 +123,57 @@ export function calculateADL(items: {
     items.stairsMobility;
 
   let classification: 'Total Dependence' | 'Severe Dependence' | 'Moderate Dependence' | 'Slight Dependence' | 'Independent' = 'Independent';
+  let severityBand: 'total_dependence' | 'severe' | 'moderate' | 'slight' | 'independent' = 'independent';
   
   if (totalScore <= 20) {
     classification = 'Total Dependence';
+    severityBand = 'total_dependence';
   } else if (totalScore <= 60) {
     classification = 'Severe Dependence';
+    severityBand = 'severe';
   } else if (totalScore <= 90) {
     classification = 'Moderate Dependence';
+    severityBand = 'moderate';
   } else if (totalScore <= 99) {
     classification = 'Slight Dependence';
+    severityBand = 'slight';
+  } else {
+    severityBand = 'independent';
   }
 
-  return { totalScore, classification };
+  return { totalScore, classification, severityBand };
 }
 
-export function calculateIADL(items: {
-  phone: number;
-  shopping: number;
-  foodPrep: number;
-  housekeeping: number;
-  laundry: number;
-  transport: number;
-  medications: number;
-  finances: number;
-}) {
+export function calculateIADL(
+  items: {
+    phone: number;
+    shopping: number;
+    foodPrep: number;
+    housekeeping: number;
+    laundry: number;
+    transport: number;
+    medications: number;
+    finances: number;
+  },
+  gender?: string
+) {
+  const isMale = gender?.toLowerCase() === 'male';
   const totalScore =
     items.phone +
     items.shopping +
-    items.foodPrep +
-    items.housekeeping +
-    items.laundry +
+    (isMale ? 0 : items.foodPrep) +
+    (isMale ? 0 : items.housekeeping) +
+    (isMale ? 0 : items.laundry) +
     items.transport +
     items.medications +
     items.finances;
 
+  const maxScore = isMale ? 5 : 8;
+  const impaired = totalScore < 5;
+
   const classification: 'Functional Impairment' | 'Independent' =
     totalScore >= 5 ? 'Independent' : 'Functional Impairment';
 
-  return { totalScore, classification };
+  return { totalScore, rawScore: totalScore, maxScore, impaired, classification };
 }
+

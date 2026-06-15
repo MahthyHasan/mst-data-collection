@@ -19,6 +19,7 @@ export interface IAdlAssessment extends Document {
   
   totalScore: number; // 0-100
   classification: 'Total Dependence' | 'Severe Dependence' | 'Moderate Dependence' | 'Slight Dependence' | 'Independent';
+  severityBand?: 'total_dependence' | 'severe' | 'moderate' | 'slight' | 'independent';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,6 +44,10 @@ const AdlAssessmentSchema: Schema<IAdlAssessment> = new Schema(
       type: String,
       enum: ['Total Dependence', 'Severe Dependence', 'Moderate Dependence', 'Slight Dependence', 'Independent'],
       required: true,
+    },
+    severityBand: {
+      type: String,
+      enum: ['total_dependence', 'severe', 'moderate', 'slight', 'independent'],
     },
   },
   { timestamps: true }

@@ -16,7 +16,11 @@ export interface IIadlAssessment extends Document {
   medications: number;
   finances: number;
   
-  totalScore: number; // 0-8
+  totalScore: number; // 0-8 (legacy/backward compatibility)
+  rawScore?: number;
+  maxScore?: number;
+  gender?: string;
+  impaired?: boolean;
   classification: 'Functional Impairment' | 'Independent';
   createdAt: Date;
   updatedAt: Date;
@@ -37,6 +41,10 @@ const IadlAssessmentSchema: Schema<IIadlAssessment> = new Schema(
     medications: { type: Number, required: true },
     finances: { type: Number, required: true },
     totalScore: { type: Number, required: true, min: 0, max: 8 },
+    rawScore: { type: Number },
+    maxScore: { type: Number },
+    gender: { type: String },
+    impaired: { type: Boolean, default: false },
     classification: {
       type: String,
       enum: ['Functional Impairment', 'Independent'],

@@ -105,8 +105,44 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       'walkIndependently', 'walkingAids', 'needsAssistanceWith', 'historyOfFalls', 'functionalNotes',
       'memoryProblems', 'dementiaDiagnosis', 'alzheimersDiagnosis', 'depressionSymptoms', 'anxietySymptoms',
       'cognitiveNotes', 'smokingHistory', 'alcoholUse', 'exerciseHabits', 'dietaryHabits', 'livesAlone',
-      'livesWithFamily', 'caregiverMaintained', 'caregiverName', 'caregiverContact', 'socialNotes'
+      'livesWithFamily', 'caregiverMaintained', 'caregiverName', 'caregiverContact', 'socialNotes',
+      // New extended fields
+      'currentHealthIssues', 'betelChewing', 'livingStatus', 'livingStatusOther', 'independenceLevel',
+      'outsideVisitFrequency', 'spiritual', 'financial', 'vision', 'hearing'
     ];
+
+    // Compatibility mappings for reports and dashboard charts
+    if (body.livingStatus !== undefined) {
+      body.livesAlone = body.livingStatus === 'alone';
+    }
+    if (body.vision !== undefined) {
+      const v = body.vision;
+      if (v) {
+        if (v.cataractDone) {
+          body.visionProblems = 'Cataract';
+        } else if (v.usesSpectacles) {
+          body.visionProblems = 'Refractive Error';
+        } else if (v.dmHtnComplicated) {
+          body.visionProblems = 'Blurred Vision';
+        } else if (v.notAttended) {
+          body.visionProblems = 'Other';
+        } else {
+          body.visionProblems = 'Normal';
+        }
+      }
+    }
+    if (body.hearing !== undefined) {
+      const h = body.hearing;
+      if (h) {
+        if (h.usesHearingAid) {
+          body.hearingProblems = 'Hearing Aid User';
+        } else if (h.whisperTestResult === 'impaired') {
+          body.hearingProblems = 'Moderate';
+        } else {
+          body.hearingProblems = 'Normal';
+        }
+      }
+    }
 
     const changedFields: string[] = [];
     updatableFields.forEach((field) => {
