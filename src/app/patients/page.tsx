@@ -85,6 +85,33 @@ export default function PatientsPage() {
   const [caregiverRelation, setCaregiverRelation] = useState('');
   const [caregiverAddress, setCaregiverAddress] = useState('');
 
+  // Task 2.1 — Current health issues
+  const [currentHealthOther, setCurrentHealthOther] = useState('');
+  // Task 2.2 — Lifestyle
+  const [betelChewing, setBetelChewing] = useState(false);
+  // Task 2.3 — Living status
+  const [livingStatus, setLivingStatus] = useState('');
+  const [livingStatusOther, setLivingStatusOther] = useState('');
+  // Task 2.4 — Social
+  const [independenceLevel, setIndependenceLevel] = useState('');
+  const [outsideVisitFrequency, setOutsideVisitFrequency] = useState('');
+  // Task 2.5 — Spiritual
+  const [spiritualReligion, setSpiritualReligion] = useState('');
+  const [spiritualAttachment, setSpiritualAttachment] = useState('');
+  // Task 2.6 — Financial
+  const [monthlyIncomeBracket, setMonthlyIncomeBracket] = useState('');
+  const [incomeSources, setIncomeSources] = useState<string[]>([]);
+  // Task 2.7 — Vision structured
+  const [visionUsesSpectacles, setVisionUsesSpectacles] = useState(false);
+  const [visionDmHtn, setVisionDmHtn] = useState(false);
+  const [visionCataractDone, setVisionCataractDone] = useState(false);
+  const [visionNotAttended, setVisionNotAttended] = useState(false);
+  const [visionSnellenRight, setVisionSnellenRight] = useState('');
+  const [visionSnellenLeft, setVisionSnellenLeft] = useState('');
+  // Task 2.8 — Hearing structured
+  const [hearingUsesAid, setHearingUsesAid] = useState(false);
+  const [hearingWhisperTest, setHearingWhisperTest] = useState('');
+
   // Calculate age from DOB
   const handleDobChange = (val: string) => {
     setDob(val);
@@ -179,6 +206,15 @@ export default function PatientsPage() {
     setCaregiverContact('');
     setCaregiverRelation('');
     setCaregiverAddress('');
+    setCurrentHealthOther('');
+    setBetelChewing(false);
+    setLivingStatus(''); setLivingStatusOther('');
+    setIndependenceLevel(''); setOutsideVisitFrequency('');
+    setSpiritualReligion(''); setSpiritualAttachment('');
+    setMonthlyIncomeBracket(''); setIncomeSources([]);
+    setVisionUsesSpectacles(false); setVisionDmHtn(false); setVisionCataractDone(false); setVisionNotAttended(false);
+    setVisionSnellenRight(''); setVisionSnellenLeft('');
+    setHearingUsesAid(false); setHearingWhisperTest('');
   };
 
   const handleAddAllergy = () => {
@@ -224,35 +260,27 @@ export default function PatientsPage() {
 
   const handleRegister = () => {
     const payload = {
-      fullName,
-      dob: new Date(dob),
-      age: parseInt(age),
-      gender: patientGender,
-      nic,
-      maritalStatus,
-      contactNumber,
-      campId: selectedCampId,
-      urinaryIncontinence,
-      constipation,
-      visionProblems,
-      hearingProblems,
-      walkIndependently,
-      historyOfFalls,
-      smokingHistory,
-      alcoholUse,
-      exerciseHabits,
-      dietaryHabits,
-      medicalConditions: selectedConditions,
-      allergies,
-      medications,
+      fullName, dob: new Date(dob), age: parseInt(age), gender: patientGender, nic, maritalStatus, contactNumber, campId: selectedCampId,
+      urinaryIncontinence, constipation,
+      currentHealthIssues: { urinaryIncontinence, constipation, other: currentHealthOther || undefined },
+      visionProblems, hearingProblems,
+      walkIndependently, historyOfFalls,
+      smokingHistory, alcoholUse, betelChewing, exerciseHabits, dietaryHabits,
+      medicalConditions: selectedConditions, allergies, medications,
       surgeries: surgeries.map((s) => ({ event: s.description, date: s.date, notes: s.description })),
-      livesAlone,
+      livesAlone: livingStatus === 'alone' || livesAlone,
       caregiverName: livesAlone ? undefined : caregiverName,
       caregiverContact: livesAlone ? undefined : caregiverContact,
       caregiverRelation: livesAlone ? undefined : caregiverRelation,
       caregiverAddress: livesAlone ? undefined : caregiverAddress,
+      livingStatus: livingStatus || undefined, livingStatusOther: livingStatus === 'other' ? livingStatusOther : undefined,
+      independenceLevel: independenceLevel || undefined,
+      outsideVisitFrequency: outsideVisitFrequency || undefined,
+      spiritual: (spiritualReligion || spiritualAttachment) ? { religion: spiritualReligion || undefined, attachment: spiritualAttachment || undefined } : undefined,
+      financial: (monthlyIncomeBracket || incomeSources.length) ? { monthlyIncomeBracket: monthlyIncomeBracket || undefined, incomeSource: incomeSources } : undefined,
+      vision: { usesSpectacles: visionUsesSpectacles, dmHtnComplicated: visionDmHtn, cataractDone: visionCataractDone, notAttended: visionNotAttended, snellenRight: visionSnellenRight || undefined, snellenLeft: visionSnellenLeft || undefined },
+      hearing: { usesHearingAid: hearingUsesAid, whisperTestResult: hearingWhisperTest || undefined },
     };
-
     createPatientMutation.mutate(payload);
   };
 
@@ -803,6 +831,51 @@ export default function PatientsPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Task 2.1 — Current Health Issues */}
+                <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
+                  <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">Current Health Issues</h4>
+                  {[{state:urinaryIncontinence,set:setUrinaryIncontinence,label:'Urinary incontinence'},{state:constipation,set:setConstipation,label:'Constipation'}].map(({state,set,label})=>(
+                    <label key={label} className="flex items-center gap-2.5 text-sm text-slate-700 dark:text-slate-350 cursor-pointer">
+                      <input type="checkbox" checked={state} onChange={e=>set(e.target.checked)} className="rounded text-teal-600 h-4 w-4 cursor-pointer" />{label}
+                    </label>
+                  ))}
+                  <input value={currentHealthOther} onChange={e=>setCurrentHealthOther(e.target.value)} placeholder="Other health issue (free text)" className="block w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none" />
+                </div>
+
+                {/* Task 2.2 — Betel chewing */}
+                <label className="flex items-center gap-2.5 text-sm text-slate-700 dark:text-slate-350 cursor-pointer">
+                  <input type="checkbox" checked={betelChewing} onChange={e=>setBetelChewing(e.target.checked)} className="rounded text-teal-600 h-4 w-4 cursor-pointer" />Betel chewing (habit)
+                </label>
+
+                {/* Task 2.7 — Vision structured */}
+                <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
+                  <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">Vision</h4>
+                  {[{state:visionUsesSpectacles,set:setVisionUsesSpectacles,label:'Uses spectacles'},{state:visionDmHtn,set:setVisionDmHtn,label:'DM/HTN complicated'},{state:visionCataractDone,set:setVisionCataractDone,label:'Cataract surgery done'},{state:visionNotAttended,set:setVisionNotAttended,label:'Not attended / unassessed'}].map(({state,set,label})=>(
+                    <label key={label} className="flex items-center gap-2.5 text-sm text-slate-700 dark:text-slate-350 cursor-pointer">
+                      <input type="checkbox" checked={state} onChange={e=>set(e.target.checked)} className="rounded text-teal-600 h-4 w-4 cursor-pointer" />{label}
+                    </label>
+                  ))}
+                  <div className="grid grid-cols-2 gap-3">
+                    <input value={visionSnellenRight} onChange={e=>setVisionSnellenRight(e.target.value)} placeholder="Snellen R (e.g. 6/6)" className="px-3 py-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none" />
+                    <input value={visionSnellenLeft} onChange={e=>setVisionSnellenLeft(e.target.value)} placeholder="Snellen L (e.g. 6/12)" className="px-3 py-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none" />
+                  </div>
+                </div>
+
+                {/* Task 2.8 — Hearing structured */}
+                <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
+                  <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">Hearing</h4>
+                  <label className="flex items-center gap-2.5 text-sm text-slate-700 dark:text-slate-350 cursor-pointer">
+                    <input type="checkbox" checked={hearingUsesAid} onChange={e=>setHearingUsesAid(e.target.checked)} className="rounded text-teal-600 h-4 w-4 cursor-pointer" />Uses hearing aid
+                  </label>
+                  <div className="flex gap-4">
+                    {[{v:'normal',l:'Normal'},{v:'impaired',l:'Impaired'},{v:'not_tested',l:'Not tested'}].map(o=>(
+                      <label key={o.v} className="flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-350 cursor-pointer">
+                        <input type="radio" name="whisperTest" value={o.v} checked={hearingWhisperTest===o.v} onChange={()=>setHearingWhisperTest(o.v)} className="text-teal-600" />{o.l}
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1008,75 +1081,107 @@ export default function PatientsPage() {
                 </div>
 
                 <div className="space-y-5">
-                  <label className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={livesAlone}
-                      onChange={(e) => setLivesAlone(e.target.checked)}
-                      className="rounded text-teal-600 focus:ring-teal-500/30 border-slate-300 dark:border-slate-850 h-5 w-5 cursor-pointer"
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white">Patient lives alone</p>
-                      <p className="text-xs text-slate-400">Enable this if the patient does not live with a designated caregiver.</p>
+                  {/* Task 2.3 — Living status */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">Living Arrangement</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {[{v:'with_spouse',l:'With spouse'},{v:'with_family',l:'With family'},{v:'with_caregiver',l:'With caregiver'},{v:'alone',l:'Alone'},{v:'care_home',l:'Care home'},{v:'other',l:'Other'}].map(o=>(
+                        <label key={o.v} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-350 cursor-pointer bg-slate-50 dark:bg-slate-800/40 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                          <input type="radio" name="livingStatus" value={o.v} checked={livingStatus===o.v} onChange={()=>setLivingStatus(o.v)} className="text-teal-600" />{o.l}
+                        </label>
+                      ))}
                     </div>
-                  </label>
+                    {livingStatus==='other' && <input value={livingStatusOther} onChange={e=>setLivingStatusOther(e.target.value)} placeholder="Specify living arrangement" className="block w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none" />}
+                  </div>
 
+                  {/* Task 2.4 — Independence + social frequency */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Independence Level</label>
+                      <select value={independenceLevel} onChange={e=>setIndependenceLevel(e.target.value)} className="block w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none">
+                        <option value="">Select…</option>
+                        <option value="independent">Independent</option>
+                        <option value="dependent">Dependent</option>
+                        <option value="bed_bound">Bed-bound</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Outside Visit Frequency</label>
+                      <select value={outsideVisitFrequency} onChange={e=>setOutsideVisitFrequency(e.target.value)} className="block w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none">
+                        <option value="">Select…</option>
+                        <option value="more_than_3_per_week">&gt;3 times/week</option>
+                        <option value="once_per_week">Once a week</option>
+                        <option value="once_per_month">Once a month</option>
+                        <option value="rarely">Rarely</option>
+                        <option value="never">Never</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Task 2.5 — Spiritual */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Religion</label>
+                      <input value={spiritualReligion} onChange={e=>setSpiritualReligion(e.target.value)} placeholder="e.g. Buddhism, Hinduism, Islam" className="block w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Spiritual Attachment</label>
+                      <select value={spiritualAttachment} onChange={e=>setSpiritualAttachment(e.target.value)} className="block w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none">
+                        <option value="">Select…</option>
+                        <option value="well">Well</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="mild">Mild</option>
+                        <option value="none">None</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Task 2.6 — Financial */}
+                  <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">Financial</h4>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Monthly Income Bracket</label>
+                      <select value={monthlyIncomeBracket} onChange={e=>setMonthlyIncomeBracket(e.target.value)} className="block w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none">
+                        <option value="">Select…</option>
+                        <option value="below_10000">Below Rs. 10,000</option>
+                        <option value="10000_25000">Rs. 10,000 – 25,000</option>
+                        <option value="25000_50000">Rs. 25,000 – 50,000</option>
+                        <option value="above_50000">Above Rs. 50,000</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Income Sources (select all that apply)</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[{v:'employed',l:'Employed'},{v:'self_employed',l:'Self-employed'},{v:'pension',l:'Pension'},{v:'asvesuma',l:'Asvesuma scheme'},{v:'religious_ngo',l:'Religious org / NGO support'},{v:'family_support',l:'Family support'},{v:'dependent_on_family',l:'Dependent on family'}].map(o=>(
+                          <label key={o.v} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-350 cursor-pointer">
+                            <input type="checkbox" checked={incomeSources.includes(o.v)} onChange={e=>setIncomeSources(e.target.checked?[...incomeSources,o.v]:incomeSources.filter(x=>x!==o.v))} className="rounded text-teal-600 h-3.5 w-3.5" />{o.l}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Keep legacy caregiver section */}
                   {!livesAlone && (
-                    <div className="space-y-4 bg-slate-50/40 dark:bg-slate-850/20 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4 animate-in slide-in-from-top-3 duration-200">
+                    <div className="space-y-4 bg-slate-50/40 dark:bg-slate-850/20 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl animate-in slide-in-from-top-3 duration-200">
                       <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">Designated Caregiver Details</h4>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                            Caregiver Name *
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="Full Name"
-                            value={caregiverName}
-                            onChange={(e) => setCaregiverName(e.target.value)}
-                            className="block w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-                          />
+                          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Caregiver Name *</label>
+                          <input type="text" required placeholder="Full Name" value={caregiverName} onChange={e=>setCaregiverName(e.target.value)} className="block w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20" />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                            Contact Phone *
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="Phone Number"
-                            value={caregiverContact}
-                            onChange={(e) => setCaregiverContact(e.target.value)}
-                            className="block w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-                          />
+                          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Contact Phone *</label>
+                          <input type="text" required placeholder="Phone Number" value={caregiverContact} onChange={e=>setCaregiverContact(e.target.value)} className="block w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20" />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                            Relationship to Patient *
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. Son, Daughter, Spouse"
-                            value={caregiverRelation}
-                            onChange={(e) => setCaregiverRelation(e.target.value)}
-                            className="block w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-                          />
+                          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Relationship to Patient *</label>
+                          <input type="text" required placeholder="e.g. Son, Daughter, Spouse" value={caregiverRelation} onChange={e=>setCaregiverRelation(e.target.value)} className="block w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20" />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                          Caregiver Address *
-                        </label>
-                        <textarea
-                          rows={2}
-                          required
-                          placeholder="Caregiver physical address..."
-                          value={caregiverAddress}
-                          onChange={(e) => setCaregiverAddress(e.target.value)}
-                          className="block w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-                        ></textarea>
+                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Caregiver Address *</label>
+                        <textarea rows={2} required placeholder="Caregiver physical address..." value={caregiverAddress} onChange={e=>setCaregiverAddress(e.target.value)} className="block w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"></textarea>
                       </div>
                     </div>
                   )}

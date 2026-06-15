@@ -20,7 +20,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const { id } = await params;
     await dbConnect();
-    const patient = await Patient.findById(id).populate('campId', 'name center code district mohArea');
+    const patient = await Patient.findById(id).populate('campId', 'name center code district mohArea sections');
     if (!patient) {
       return NextResponse.json({ error: 'Patient not found' }, { status: 404 });
     }
@@ -33,6 +33,27 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const adlAssessments = await AdlAssessment.find({ patientId: id }).sort({ createdAt: -1 });
     const iadlAssessments = await IadlAssessment.find({ patientId: id }).sort({ createdAt: -1 });
 
+    const campIdStr = patient.campId?._id?.toString() || patient.campId?.toString();
+
+    const filterByCamp = (records: { campId: { toString: () => string } }[]) =>
+      records.filter((r) => r.campId.toString() === campIdStr);
+
+    const campCheckups = filterByCamp(checkups);
+    const campFalls = filterByCamp(fallAssessments);
+    const campGds = filterByCamp(gdsAssessments);
+    const campMinicog = filterByCamp(minicogAssessments);
+    const campAdl = filterByCamp(adlAssessments);
+    const campIadl = filterByCamp(iadlAssessments);
+
+    const assessmentStatus = {
+      checkup: campCheckups.length > 0,
+      fall: campFalls.length > 0,
+      gds: campGds.length > 0,
+      minicog: campMinicog.length > 0,
+      adl: campAdl.length > 0,
+      iadl: campIadl.length > 0,
+    };
+
     return NextResponse.json({
       patient,
       checkups,
@@ -41,6 +62,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       minicogAssessments,
       adlAssessments,
       iadlAssessments,
+      assessmentStatus,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -83,8 +105,44 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       'walkIndependently', 'walkingAids', 'needsAssistanceWith', 'historyOfFalls', 'functionalNotes',
       'memoryProblems', 'dementiaDiagnosis', 'alzheimersDiagnosis', 'depressionSymptoms', 'anxietySymptoms',
       'cognitiveNotes', 'smokingHistory', 'alcoholUse', 'exerciseHabits', 'dietaryHabits', 'livesAlone',
-      'livesWithFamily', 'caregiverMaintained', 'caregiverName', 'caregiverContact', 'socialNotes'
+      'livesWithFamily', 'caregiverMaintained', 'caregiverName', 'caregiverContact', 'socialNotes',
+      // New extended fields
+      'currentHealthIssues', 'betelChewing', 'livingStatus', 'livingStatusOther', 'independenceLevel',
+      'outsideVisitFrequency', 'spiritual', 'financial', 'vision', 'hearing'
     ];
+
+    // Compatibility mappings for reports and dashboard charts
+    if (body.livingStatus !== undefined) {
+      body.livesAlone = body.livingStatus === 'alone';
+    }
+    if (body.vision !== undefined) {
+      const v = body.vision;
+      if (v) {
+        if (v.cataractDone) {
+          body.visionProblems = 'Cataract';
+        } else if (v.usesSpectacles) {
+          body.visionProblems = 'Refractive Error';
+        } else if (v.dmHtnComplicated) {
+          body.visionProblems = 'Blurred Vision';
+        } else if (v.notAttended) {
+          body.visionProblems = 'Other';
+        } else {
+          body.visionProblems = 'Normal';
+        }
+      }
+    }
+    if (body.hearing !== undefined) {
+      const h = body.hearing;
+      if (h) {
+        if (h.usesHearingAid) {
+          body.hearingProblems = 'Hearing Aid User';
+        } else if (h.whisperTestResult === 'impaired') {
+          body.hearingProblems = 'Moderate';
+        } else {
+          body.hearingProblems = 'Normal';
+        }
+      }
+    }
 
     const changedFields: string[] = [];
     updatableFields.forEach((field) => {

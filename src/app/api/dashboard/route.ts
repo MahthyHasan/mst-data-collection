@@ -250,6 +250,63 @@ export async function GET(req: Request) {
 
     const employeeActivity = Object.values(staffMap).filter((item) => item.count > 0);
 
+    // 5. Section breakdown by stationLabel
+    const sectionBreakdownMap: Record<string, {
+      stationLabel: string;
+      patientsAssessed: number;
+      assessments: Record<string, number>;
+      totalAssessments: number;
+      completionRate: number;
+    }> = {};
+
+    const patientsPerStation: Record<string, Set<string>> = {};
+
+    const ensureSection = (label: string) => {
+      if (!sectionBreakdownMap[label]) {
+        sectionBreakdownMap[label] = {
+          stationLabel: label,
+          patientsAssessed: 0,
+          assessments: { checkup: 0, fall: 0, gds: 0, minicog: 0, adl: 0, iadl: 0 },
+          totalAssessments: 0,
+          completionRate: 0,
+        };
+        patientsPerStation[label] = new Set();
+      }
+      return sectionBreakdownMap[label];
+    };
+
+    const assessmentCollections = [
+      { find: () => MedicalCheckup.find(assessmentQuery).select('stationLabel patientId'), key: 'checkup' },
+      { find: () => FallAssessment.find(assessmentQuery).select('stationLabel patientId'), key: 'fall' },
+      { find: () => GdsAssessment.find(assessmentQuery).select('stationLabel patientId'), key: 'gds' },
+      { find: () => MinicogAssessment.find(assessmentQuery).select('stationLabel patientId'), key: 'minicog' },
+      { find: () => AdlAssessment.find(assessmentQuery).select('stationLabel patientId'), key: 'adl' },
+      { find: () => IadlAssessment.find(assessmentQuery).select('stationLabel patientId'), key: 'iadl' },
+    ];
+
+    for (const { find, key } of assessmentCollections) {
+      const records = await find();
+      records.forEach((record: { stationLabel?: string; patientId: { toString: () => string } }) => {
+        const label = record.stationLabel || 'Unassigned';
+        const section = ensureSection(label);
+        section.assessments[key]++;
+        section.totalAssessments++;
+        patientsPerStation[label].add(record.patientId.toString());
+      });
+    }
+
+    const sectionBreakdown = Object.values(sectionBreakdownMap).map((section) => {
+      const patientCount = patientsPerStation[section.stationLabel]?.size || 0;
+      return {
+        ...section,
+        patientsAssessed: patientCount,
+        registrations: patientCount,
+        completionRate: totalPatientsCount > 0
+          ? Math.round((patientCount / totalPatientsCount) * 100)
+          : 0,
+      };
+    });
+
     return NextResponse.json({
       summary: {
         totalPatients: totalPatientsCount,
@@ -297,6 +354,7 @@ export async function GET(req: Request) {
         registrationsOverTime,
         employeeActivity,
       },
+      sectionBreakdown,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

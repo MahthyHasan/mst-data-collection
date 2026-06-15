@@ -1,5 +1,10 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
+export interface ICampSection {
+  label: string;
+  modules: string[];
+}
+
 export interface ICamp extends Document {
   name: string;
   code: string;
@@ -11,10 +16,19 @@ export interface ICamp extends Document {
   organizedBy: string;
   status: 'Planned' | 'Active' | 'Completed' | 'Cancelled';
   notes?: string;
+  sections: ICampSection[];
   isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const CampSectionSchema = new Schema(
+  {
+    label: { type: String, required: true, trim: true },
+    modules: { type: [String], required: true },
+  },
+  { _id: false }
+);
 
 const CampSchema: Schema<ICamp> = new Schema(
   {
@@ -32,6 +46,7 @@ const CampSchema: Schema<ICamp> = new Schema(
       default: 'Planned',
     },
     notes: { type: String },
+    sections: { type: [CampSectionSchema], default: [] },
     isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }

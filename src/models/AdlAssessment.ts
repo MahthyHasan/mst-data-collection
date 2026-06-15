@@ -4,7 +4,8 @@ export interface IAdlAssessment extends Document {
   patientId: mongoose.Types.ObjectId;
   campId: mongoose.Types.ObjectId;
   recordedBy: mongoose.Types.ObjectId;
-  
+  stationLabel?: string;
+
   // Barthel Index items
   feeding: number;
   bathing: number;
@@ -18,6 +19,7 @@ export interface IAdlAssessment extends Document {
   
   totalScore: number; // 0-100
   classification: 'Total Dependence' | 'Severe Dependence' | 'Moderate Dependence' | 'Slight Dependence' | 'Independent';
+  severityBand?: 'total_dependence' | 'severe' | 'moderate' | 'slight' | 'independent';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +29,7 @@ const AdlAssessmentSchema: Schema<IAdlAssessment> = new Schema(
     patientId: { type: Schema.Types.ObjectId, ref: 'Patient', required: true, index: true },
     campId: { type: Schema.Types.ObjectId, ref: 'Camp', required: true },
     recordedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    stationLabel: { type: String, trim: true },
     feeding: { type: Number, required: true },
     bathing: { type: Number, required: true },
     grooming: { type: Number, required: true },
@@ -41,6 +44,10 @@ const AdlAssessmentSchema: Schema<IAdlAssessment> = new Schema(
       type: String,
       enum: ['Total Dependence', 'Severe Dependence', 'Moderate Dependence', 'Slight Dependence', 'Independent'],
       required: true,
+    },
+    severityBand: {
+      type: String,
+      enum: ['total_dependence', 'severe', 'moderate', 'slight', 'independent'],
     },
   },
   { timestamps: true }

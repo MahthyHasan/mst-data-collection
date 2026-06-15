@@ -19,6 +19,12 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ASSESSMENT_MODULES, MODULE_LABELS } from '@/lib/schemas';
+
+interface CampSection {
+  label: string;
+  modules: string[];
+}
 
 export default function CampsPage() {
   const { data: session } = useSession();
@@ -39,6 +45,7 @@ export default function CampsPage() {
   const [organizedBy, setOrganizedBy] = useState('');
   const [campStatus, setCampStatus] = useState<'Planned' | 'Active' | 'Completed' | 'Cancelled'>('Planned');
   const [notes, setNotes] = useState('');
+  const [sections, setSections] = useState<CampSection[]>([]);
 
   const isAdmin = session?.user?.role === 'admin';
 
@@ -130,6 +137,9 @@ export default function CampsPage() {
     setOrganizedBy('');
     setCampStatus('Planned');
     setNotes('');
+    setSections([
+      { label: 'Section 01', modules: ['checkup', 'fall'] },
+    ]);
     setIsModalOpen(true);
   };
 
@@ -145,6 +155,7 @@ export default function CampsPage() {
     setOrganizedBy(camp.organizedBy);
     setCampStatus(camp.status);
     setNotes(camp.notes || '');
+    setSections(camp.sections?.length ? camp.sections : [{ label: 'Section 01', modules: ['checkup', 'fall'] }]);
     setIsModalOpen(true);
   };
 
@@ -171,6 +182,7 @@ export default function CampsPage() {
       organizedBy,
       status: campStatus,
       notes,
+      sections,
     };
 
     if (editingCamp) {
@@ -184,6 +196,29 @@ export default function CampsPage() {
     if (confirm('Are you sure you want to archive this medical camp?')) {
       deleteMutation.mutate(id);
     }
+  };
+
+  const addSection = () => {
+    setSections([...sections, { label: `Section ${String(sections.length + 1).padStart(2, '0')}`, modules: [] }]);
+  };
+
+  const removeSection = (index: number) => {
+    setSections(sections.filter((_, i) => i !== index));
+  };
+
+  const updateSectionLabel = (index: number, label: string) => {
+    const updated = [...sections];
+    updated[index] = { ...updated[index], label };
+    setSections(updated);
+  };
+
+  const toggleSectionModule = (index: number, module: string) => {
+    const updated = [...sections];
+    const modules = updated[index].modules.includes(module)
+      ? updated[index].modules.filter((m) => m !== module)
+      : [...updated[index].modules, module];
+    updated[index] = { ...updated[index], modules };
+    setSections(updated);
   };
 
   return (
@@ -310,6 +345,19 @@ export default function CampsPage() {
                       <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
                         {camp.notes}
                       </p>
+                    </div>
+                  )}
+
+                  {camp.sections?.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {camp.sections.map((section: CampSection) => (
+                        <span
+                          key={section.label}
+                          className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/30 text-teal-600 dark:text-teal-400"
+                        >
+                          {section.label}: {section.modules.join(', ')}
+                        </span>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -488,6 +536,66 @@ export default function CampsPage() {
                   placeholder="Any extra details or descriptions regarding this medical camp..."
                   className="block w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                 ></textarea>
+              </div>
+
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Camp Sections Configuration
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addSection}
+                    className="text-xs font-semibold text-teal-600 hover:text-teal-700 cursor-pointer"
+                  >
+                    + Add Section
+                  </button>
+                </div>
+                <p className="text-xs text-slate-400">
+                  Define physical sections and which assessment modules each handles. Section 01 should include checkup and fall.
+                </p>
+                {sections.map((section, index) => (
+                  <div key={index} className="bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        value={section.label}
+                        onChange={(e) => updateSectionLabel(index, e.target.value)}
+                        placeholder="Section label"
+                        className="flex-1 px-3 py-2 bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                      />
+                      {sections.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeSection(index)}
+                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl cursor-pointer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {ASSESSMENT_MODULES.map((module) => (
+                        <label
+                          key={module}
+                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border ${
+                            section.modules.includes(module)
+                              ? 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/30 dark:text-teal-400 dark:border-teal-900/40'
+                              : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={section.modules.includes(module)}
+                            onChange={() => toggleSectionModule(index, module)}
+                            className="sr-only"
+                          />
+                          {MODULE_LABELS[module]}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">

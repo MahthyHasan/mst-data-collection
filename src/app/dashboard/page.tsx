@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '@/components/DashboardLayout';
+import NicQuickLookup from '@/components/NicQuickLookup';
 import {
   Users,
   Hospital,
@@ -114,6 +115,8 @@ export default function DashboardPage() {
           Refresh Stats
         </button>
       </div>
+
+      <NicQuickLookup />
 
       {/* Filter panel */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
@@ -408,6 +411,61 @@ export default function DashboardPage() {
                   </LineChart>
                 </ResponsiveContainer>
               </div>
+            </div>
+
+            {/* Section Breakdown */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col lg:col-span-2">
+              <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+                <Activity className="h-4 w-4 text-teal-600" />
+                Section Activity Breakdown
+              </h2>
+              {(dashboardData?.sectionBreakdown || []).length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
+                  No section data yet. Assessments will appear here once staff record data with station labels.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800">
+                        <th className="text-left py-2 px-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Section</th>
+                        <th className="text-right py-2 px-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Patients</th>
+                        <th className="text-right py-2 px-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Assessments</th>
+                        <th className="text-right py-2 px-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Completion %</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(dashboardData?.sectionBreakdown || []).map((section: any) => (
+                        <tr key={section.stationLabel} className="border-b border-slate-100 dark:border-slate-800/50">
+                          <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200">{section.stationLabel}</td>
+                          <td className="py-2.5 px-3 text-right text-slate-600 dark:text-slate-400">{section.registrations}</td>
+                          <td className="py-2.5 px-3 text-right text-slate-600 dark:text-slate-400">{section.totalAssessments}</td>
+                          <td className="py-2.5 px-3 text-right">
+                            <span className={`font-semibold ${section.completionRate >= 50 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                              {section.completionRate}%
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {(dashboardData?.sectionBreakdown || []).length > 0 && (
+                <div className="mt-4 h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={dashboardData?.sectionBreakdown || []}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="stationLabel" fontSize={10} stroke="#94a3b8" />
+                      <YAxis fontSize={11} stroke="#94a3b8" />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="totalAssessments" name="Assessments" fill="#0d9488" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="registrations" name="Patients Assessed" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </div>
           </div>
         </>

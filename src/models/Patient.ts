@@ -32,6 +32,11 @@ export interface IPatient extends Document {
   urinaryIncontinence: boolean;
   constipation: boolean;
   freeTextIssues?: string;
+  currentHealthIssues?: {
+    urinaryIncontinence: boolean;
+    constipation: boolean;
+    other?: string;
+  };
   
   allergies: IAllergy[];
   medicalConditions: string[];
@@ -43,6 +48,20 @@ export interface IPatient extends Document {
   visionProblems: 'None' | 'Normal' | 'Refractive Error' | 'Cataract' | 'Glaucoma' | 'Blurred Vision' | 'Other';
   hearingProblems: 'None' | 'Normal' | 'Mild' | 'Moderate' | 'Severe' | 'Hearing Aid User';
   
+  vision?: {
+    usesSpectacles: boolean;
+    dmHtnComplicated: boolean;
+    cataractDone: boolean;
+    notAttended: boolean;
+    snellenRight?: string;
+    snellenLeft?: string;
+  };
+
+  hearing?: {
+    usesHearingAid: boolean;
+    whisperTestResult?: 'normal' | 'impaired' | 'not_tested';
+  };
+
   // Functional Status
   walkIndependently: boolean;
   walkingAids: string[];
@@ -61,16 +80,32 @@ export interface IPatient extends Document {
   // Lifestyle
   smokingHistory: 'Never' | 'Former' | 'Current';
   alcoholUse: 'Never' | 'Occasional' | 'Regular';
+  betelChewing?: boolean;
   exerciseHabits?: string;
   dietaryHabits?: string;
   
   // Social
-  livesAlone: boolean;
+  livesAlone?: boolean;
   livesWithFamily: boolean;
   caregiverMaintained: boolean;
   caregiverName?: string;
   caregiverContact?: string;
   socialNotes?: string;
+
+  livingStatus?: 'with_spouse' | 'with_family' | 'with_caregiver' | 'alone' | 'care_home' | 'other';
+  livingStatusOther?: string;
+  independenceLevel?: 'independent' | 'dependent' | 'bed_bound';
+  outsideVisitFrequency?: 'more_than_3_per_week' | 'once_per_week' | 'once_per_month' | 'rarely' | 'never';
+
+  spiritual?: {
+    religion?: string;
+    attachment?: 'well' | 'moderate' | 'mild' | 'none';
+  };
+
+  financial?: {
+    monthlyIncomeBracket?: 'below_10000' | '10000_25000' | '25000_50000' | 'above_50000';
+    incomeSource?: ('employed' | 'self_employed' | 'pension' | 'asvesuma' | 'religious_ngo' | 'family_support' | 'dependent_on_family')[];
+  };
   
   isDeleted: boolean;
   createdAt: Date;
@@ -92,6 +127,11 @@ const PatientSchema: Schema<IPatient> = new Schema(
     urinaryIncontinence: { type: Boolean, default: false },
     constipation: { type: Boolean, default: false },
     freeTextIssues: { type: String },
+    currentHealthIssues: {
+      urinaryIncontinence: { type: Boolean, default: false },
+      constipation:        { type: Boolean, default: false },
+      other:               { type: String }
+    },
     
     allergies: [
       {
@@ -120,6 +160,20 @@ const PatientSchema: Schema<IPatient> = new Schema(
     visionProblems: { type: String, enum: ['None', 'Normal', 'Refractive Error', 'Cataract', 'Glaucoma', 'Blurred Vision', 'Other'], default: 'None' },
     hearingProblems: { type: String, enum: ['None', 'Normal', 'Mild', 'Moderate', 'Severe', 'Hearing Aid User'], default: 'None' },
     
+    vision: {
+      usesSpectacles:    { type: Boolean, default: false },
+      dmHtnComplicated:  { type: Boolean, default: false },
+      cataractDone:      { type: Boolean, default: false },
+      notAttended:       { type: Boolean, default: false },
+      snellenRight:      { type: String },
+      snellenLeft:       { type: String }
+    },
+    
+    hearing: {
+      usesHearingAid:    { type: Boolean, default: false },
+      whisperTestResult: { type: String, enum: ['normal', 'impaired', 'not_tested'] }
+    },
+
     walkIndependently: { type: Boolean, default: true },
     walkingAids: [{ type: String }],
     needsAssistanceWith: [{ type: String }],
@@ -135,6 +189,7 @@ const PatientSchema: Schema<IPatient> = new Schema(
     
     smokingHistory: { type: String, enum: ['Never', 'Former', 'Current'], default: 'Never' },
     alcoholUse: { type: String, enum: ['Never', 'Occasional', 'Regular'], default: 'Never' },
+    betelChewing: { type: Boolean, default: false },
     exerciseHabits: { type: String },
     dietaryHabits: { type: String },
     
@@ -144,6 +199,34 @@ const PatientSchema: Schema<IPatient> = new Schema(
     caregiverName: { type: String },
     caregiverContact: { type: String },
     socialNotes: { type: String },
+
+    livingStatus: {
+      type: String,
+      enum: ['with_spouse', 'with_family', 'with_caregiver', 'alone', 'care_home', 'other']
+    },
+    livingStatusOther: String,
+    independenceLevel: {
+      type: String,
+      enum: ['independent', 'dependent', 'bed_bound']
+    },
+    outsideVisitFrequency: {
+      type: String,
+      enum: ['more_than_3_per_week', 'once_per_week', 'once_per_month', 'rarely', 'never']
+    },
+    spiritual: {
+      religion: { type: String },
+      attachment: { type: String, enum: ['well', 'moderate', 'mild', 'none'] }
+    },
+    financial: {
+      monthlyIncomeBracket: {
+        type: String,
+        enum: ['below_10000', '10000_25000', '25000_50000', 'above_50000']
+      },
+      incomeSource: [{
+        type: String,
+        enum: ['employed', 'self_employed', 'pension', 'asvesuma', 'religious_ngo', 'family_support', 'dependent_on_family']
+      }]
+    },
     
     isDeleted: { type: Boolean, default: false },
   },
