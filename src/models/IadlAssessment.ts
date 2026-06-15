@@ -4,7 +4,8 @@ export interface IIadlAssessment extends Document {
   patientId: mongoose.Types.ObjectId;
   campId: mongoose.Types.ObjectId;
   recordedBy: mongoose.Types.ObjectId;
-  
+  stationLabel?: string;
+
   // Lawton IADL items (0 or 1 point each)
   phone: number;
   shopping: number;
@@ -26,6 +27,7 @@ const IadlAssessmentSchema: Schema<IIadlAssessment> = new Schema(
     patientId: { type: Schema.Types.ObjectId, ref: 'Patient', required: true, index: true },
     campId: { type: Schema.Types.ObjectId, ref: 'Camp', required: true },
     recordedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    stationLabel: { type: String, trim: true },
     phone: { type: Number, required: true },
     shopping: { type: Number, required: true },
     foodPrep: { type: Number, required: true },

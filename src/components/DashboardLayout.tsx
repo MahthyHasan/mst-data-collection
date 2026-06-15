@@ -17,6 +17,7 @@ import {
   User,
   Activity,
 } from 'lucide-react';
+import StationSelector from '@/components/StationSelector';
 
 interface SidebarItem {
   name: string;
@@ -76,6 +77,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 );
               })}
             </nav>
+
+            <StationSelector />
 
             {/* Profile and Logout */}
             <div className="px-4 border-t border-slate-200 dark:border-slate-800 pt-4">
@@ -160,6 +163,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     );
                   })}
                 </nav>
+
+                <StationSelector />
 
                 <div className="px-4">
                   <div className="flex items-center gap-3 px-3 py-2 bg-slate-50 dark:bg-slate-800/40 rounded-xl mb-3">

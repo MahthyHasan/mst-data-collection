@@ -76,6 +76,12 @@ async function seed() {
         organizedBy: 'Health Care Society Colombo',
         status: 'Active',
         notes: 'Targeting 200 elderly patients from local low-income communities.',
+        sections: [
+          { label: 'Section 01', modules: ['checkup', 'fall'] },
+          { label: 'Section 02', modules: ['gds'] },
+          { label: 'Section 03', modules: ['minicog', 'adl'] },
+          { label: 'Section 04', modules: ['iadl'] },
+        ],
         isDeleted: false,
       });
       await camp1.save();
@@ -91,6 +97,11 @@ async function seed() {
         organizedBy: 'Southern Elders Foundation',
         status: 'Planned',
         notes: 'Focused on diabetic and hypertensive screenings.',
+        sections: [
+          { label: 'Section 01', modules: ['checkup', 'fall'] },
+          { label: 'Section 02', modules: ['gds', 'minicog'] },
+          { label: 'Section 03', modules: ['adl', 'iadl'] },
+        ],
         isDeleted: false,
       });
       await camp2.save();

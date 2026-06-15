@@ -28,6 +28,7 @@ export async function POST(req: Request) {
       usesAssistiveDevice,
       impairedBalance,
       visionImpairment,
+      stationLabel,
     } = body;
 
     if (!patientId || !campId) {
@@ -51,6 +52,7 @@ export async function POST(req: Request) {
       patientId: new mongoose.Types.ObjectId(patientId),
       campId: new mongoose.Types.ObjectId(campId),
       recordedBy: new mongoose.Types.ObjectId(session.user.id),
+      stationLabel: stationLabel || undefined,
       ...answers,
       riskScore: score,
       riskClassification: classification,

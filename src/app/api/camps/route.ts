@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/authOptions';
 import { dbConnect } from '@/lib/db';
 import Camp from '@/models/Camp';
 import { logAudit } from '@/lib/audit';
+import { campSectionsSchema } from '@/lib/schemas';
 
 export async function GET(req: Request) {
   try {
@@ -52,6 +53,13 @@ export async function POST(req: Request) {
 
     await dbConnect();
     const body = await req.json();
+
+    if (body.sections) {
+      const parsed = campSectionsSchema.safeParse(body.sections);
+      if (!parsed.success) {
+        return NextResponse.json({ error: 'Invalid sections configuration' }, { status: 400 });
+      }
+    }
     
     // Check if camp code already exists
     const existing = await Camp.findOne({ code: body.code, isDeleted: false });

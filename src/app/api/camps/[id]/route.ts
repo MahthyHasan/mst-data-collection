@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/authOptions';
 import { dbConnect } from '@/lib/db';
 import Camp from '@/models/Camp';
 import { logAudit } from '@/lib/audit';
+import { campSectionsSchema } from '@/lib/schemas';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -39,6 +40,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const { id } = await params;
     await dbConnect();
     const body = await req.json();
+
+    if (body.sections) {
+      const parsed = campSectionsSchema.safeParse(body.sections);
+      if (!parsed.success) {
+        return NextResponse.json({ error: 'Invalid sections configuration' }, { status: 400 });
+      }
+    }
+
     const camp = await Camp.findById(id);
     if (!camp || camp.isDeleted) {
       return NextResponse.json({ error: 'Camp not found' }, { status: 404 });
@@ -66,6 +75,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       'organizedBy',
       'status',
       'notes',
+      'sections',
     ];
     
     const changedFields: string[] = [];

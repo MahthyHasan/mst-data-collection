@@ -20,7 +20,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const { id } = await params;
     await dbConnect();
-    const patient = await Patient.findById(id).populate('campId', 'name center code district mohArea');
+    const patient = await Patient.findById(id).populate('campId', 'name center code district mohArea sections');
     if (!patient) {
       return NextResponse.json({ error: 'Patient not found' }, { status: 404 });
     }
@@ -33,6 +33,27 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const adlAssessments = await AdlAssessment.find({ patientId: id }).sort({ createdAt: -1 });
     const iadlAssessments = await IadlAssessment.find({ patientId: id }).sort({ createdAt: -1 });
 
+    const campIdStr = patient.campId?._id?.toString() || patient.campId?.toString();
+
+    const filterByCamp = (records: { campId: { toString: () => string } }[]) =>
+      records.filter((r) => r.campId.toString() === campIdStr);
+
+    const campCheckups = filterByCamp(checkups);
+    const campFalls = filterByCamp(fallAssessments);
+    const campGds = filterByCamp(gdsAssessments);
+    const campMinicog = filterByCamp(minicogAssessments);
+    const campAdl = filterByCamp(adlAssessments);
+    const campIadl = filterByCamp(iadlAssessments);
+
+    const assessmentStatus = {
+      checkup: campCheckups.length > 0,
+      fall: campFalls.length > 0,
+      gds: campGds.length > 0,
+      minicog: campMinicog.length > 0,
+      adl: campAdl.length > 0,
+      iadl: campIadl.length > 0,
+    };
+
     return NextResponse.json({
       patient,
       checkups,
@@ -41,6 +62,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       minicogAssessments,
       adlAssessments,
       iadlAssessments,
+      assessmentStatus,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

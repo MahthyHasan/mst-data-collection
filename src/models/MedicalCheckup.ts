@@ -4,6 +4,7 @@ export interface IMedicalCheckup extends Document {
   patientId: mongoose.Types.ObjectId;
   campId: mongoose.Types.ObjectId;
   recordedBy: mongoose.Types.ObjectId;
+  stationLabel?: string;
   height: number; // in meters
   weight: number; // in kg
   waistCircumference: number; // in cm
@@ -23,6 +24,7 @@ const MedicalCheckupSchema: Schema<IMedicalCheckup> = new Schema(
     patientId: { type: Schema.Types.ObjectId, ref: 'Patient', required: true, index: true },
     campId: { type: Schema.Types.ObjectId, ref: 'Camp', required: true },
     recordedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    stationLabel: { type: String, trim: true },
     height: { type: Number, required: true },
     weight: { type: Number, required: true },
     waistCircumference: { type: Number, required: true },

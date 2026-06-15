@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     await dbConnect();
     const body = await req.json();
 
-    const { patientId, campId, recallScore, clockDrawingScore } = body;
+    const { patientId, campId, recallScore, clockDrawingScore, stationLabel } = body;
 
     if (patientId === undefined || campId === undefined || recallScore === undefined || clockDrawingScore === undefined) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -32,6 +32,7 @@ export async function POST(req: Request) {
       patientId: new mongoose.Types.ObjectId(patientId),
       campId: new mongoose.Types.ObjectId(campId),
       recordedBy: new mongoose.Types.ObjectId(session.user.id),
+      stationLabel: stationLabel || undefined,
       recallScore: recScore,
       clockDrawingScore: clkScore,
       totalScore,

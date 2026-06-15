@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     await dbConnect();
     const body = await req.json();
 
-    const { patientId, campId, height, weight, waistCircumference, bloodPressureSystolic, bloodPressureDiastolic, randomBloodSugar, visionAssessmentNotes, hearingAssessmentNotes } = body;
+    const { patientId, campId, height, weight, waistCircumference, bloodPressureSystolic, bloodPressureDiastolic, randomBloodSugar, visionAssessmentNotes, hearingAssessmentNotes, stationLabel } = body;
 
     if (!patientId || !campId || !height || !weight) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -29,6 +29,7 @@ export async function POST(req: Request) {
       patientId: new mongoose.Types.ObjectId(patientId),
       campId: new mongoose.Types.ObjectId(campId),
       recordedBy: new mongoose.Types.ObjectId(session.user.id),
+      stationLabel: stationLabel || undefined,
       height: parseFloat(height),
       weight: parseFloat(weight),
       waistCircumference: parseFloat(waistCircumference || 0),

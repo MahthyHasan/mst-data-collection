@@ -2,7 +2,11 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 import DashboardLayout from '@/components/DashboardLayout';
+import AssessmentStatusBar from '@/components/AssessmentStatusBar';
+import { getStationContext } from '@/lib/stationContext';
+import { AssessmentModule, MODULE_LABELS } from '@/lib/schemas';
 import { useParams, useRouter } from 'next/navigation';
 import {
   User,
@@ -34,7 +38,10 @@ export default function PatientDetailPage() {
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
   const patientId = params.id as string;
+  const stationContext = getStationContext();
+  const isAdmin = session?.user?.role === 'admin';
 
   // Modals state
   const [activeModal, setActiveModal] = useState<
@@ -127,6 +134,7 @@ export default function PatientDetailPage() {
         body: JSON.stringify({
           patientId,
           campId: data.patient.campId?._id || data.patient.campId,
+          stationLabel: stationContext?.label,
           ...payload,
         }),
       });
@@ -271,7 +279,39 @@ export default function PatientDetailPage() {
     );
   }
 
-  const { patient, checkups, fallAssessments, gdsAssessments, minicogAssessments, adlAssessments, iadlAssessments } = data;
+  const { patient, checkups, fallAssessments, gdsAssessments, minicogAssessments, adlAssessments, iadlAssessments, assessmentStatus } = data;
+
+  const allowedModules: AssessmentModule[] | null = isAdmin
+    ? null
+    : stationContext?.modules?.length
+      ? (stationContext.modules as AssessmentModule[])
+      : null;
+
+  const isModuleVisible = (module: AssessmentModule) =>
+    !allowedModules || allowedModules.includes(module);
+
+  const assessmentButtons: {
+    module: AssessmentModule;
+    modal: 'checkup' | 'fall' | 'gds' | 'minicog' | 'adl' | 'iadl';
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+  }[] = [
+    { module: 'checkup', modal: 'checkup', icon: ActivityIcon, color: 'text-teal-600' },
+    { module: 'fall', modal: 'fall', icon: ShieldAlert, color: 'text-rose-600' },
+    { module: 'gds', modal: 'gds', icon: Frown, color: 'text-amber-600' },
+    { module: 'minicog', modal: 'minicog', icon: Brain, color: 'text-purple-600' },
+    { module: 'adl', modal: 'adl', icon: ClipboardList, color: 'text-sky-600' },
+    { module: 'iadl', modal: 'iadl', icon: Layers, color: 'text-indigo-600' },
+  ];
+
+  const defaultStatus: Record<AssessmentModule, boolean> = {
+    checkup: false,
+    fall: false,
+    gds: false,
+    minicog: false,
+    adl: false,
+    iadl: false,
+  };
 
   return (
     <DashboardLayout>
@@ -304,6 +344,8 @@ export default function PatientDetailPage() {
           Generate Health PDF
         </button>
       </div>
+
+      <AssessmentStatusBar status={assessmentStatus || defaultStatus} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Demographics Profile */}
@@ -399,50 +441,28 @@ export default function PatientDetailPage() {
             <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <ClipboardList className="h-4.5 w-4.5 text-teal-600" />
               Perform Geriatric Assessments
+              {stationContext && !isAdmin && (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/30 text-teal-600 dark:text-teal-400">
+                  {stationContext.label}
+                </span>
+              )}
             </h2>
+            {!isAdmin && !stationContext && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/40 rounded-xl px-3 py-2">
+                Select your section in the sidebar to see only your assigned assessment modules.
+              </p>
+            )}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <button
-                onClick={() => setActiveModal('checkup')}
-                className="flex flex-col items-start gap-2 bg-slate-50/50 hover:bg-teal-50 dark:bg-slate-850 dark:hover:bg-teal-950/20 p-4 border border-slate-200 dark:border-slate-800 rounded-2xl text-left transition-all duration-200 cursor-pointer"
-              >
-                <ActivityIcon className="h-5 w-5 text-teal-600" />
-                <span className="font-bold text-xs text-slate-800 dark:text-white">Medical Check-up</span>
-              </button>
-              <button
-                onClick={() => setActiveModal('fall')}
-                className="flex flex-col items-start gap-2 bg-slate-50/50 hover:bg-teal-50 dark:bg-slate-850 dark:hover:bg-teal-950/20 p-4 border border-slate-200 dark:border-slate-800 rounded-2xl text-left transition-all duration-200 cursor-pointer"
-              >
-                <ShieldAlert className="h-5 w-5 text-rose-600" />
-                <span className="font-bold text-xs text-slate-800 dark:text-white">Fall Risk Scale</span>
-              </button>
-              <button
-                onClick={() => setActiveModal('gds')}
-                className="flex flex-col items-start gap-2 bg-slate-50/50 hover:bg-teal-50 dark:bg-slate-850 dark:hover:bg-teal-950/20 p-4 border border-slate-200 dark:border-slate-800 rounded-2xl text-left transition-all duration-200 cursor-pointer"
-              >
-                <Frown className="h-5 w-5 text-amber-600" />
-                <span className="font-bold text-xs text-slate-800 dark:text-white">GDS-15 Depression</span>
-              </button>
-              <button
-                onClick={() => setActiveModal('minicog')}
-                className="flex flex-col items-start gap-2 bg-slate-50/50 hover:bg-teal-50 dark:bg-slate-850 dark:hover:bg-teal-950/20 p-4 border border-slate-200 dark:border-slate-800 rounded-2xl text-left transition-all duration-200 cursor-pointer"
-              >
-                <Brain className="h-5 w-5 text-purple-600" />
-                <span className="font-bold text-xs text-slate-800 dark:text-white">Mini-Cog Screen</span>
-              </button>
-              <button
-                onClick={() => setActiveModal('adl')}
-                className="flex flex-col items-start gap-2 bg-slate-50/50 hover:bg-teal-50 dark:bg-slate-850 dark:hover:bg-teal-950/20 p-4 border border-slate-200 dark:border-slate-800 rounded-2xl text-left transition-all duration-200 cursor-pointer"
-              >
-                <ClipboardList className="h-5 w-5 text-sky-600" />
-                <span className="font-bold text-xs text-slate-800 dark:text-white">Barthel ADL Index</span>
-              </button>
-              <button
-                onClick={() => setActiveModal('iadl')}
-                className="flex flex-col items-start gap-2 bg-slate-50/50 hover:bg-teal-50 dark:bg-slate-850 dark:hover:bg-teal-950/20 p-4 border border-slate-200 dark:border-slate-800 rounded-2xl text-left transition-all duration-200 cursor-pointer"
-              >
-                <Layers className="h-5 w-5 text-indigo-600" />
-                <span className="font-bold text-xs text-slate-800 dark:text-white">Lawton IADL Scale</span>
-              </button>
+              {assessmentButtons.filter((btn) => isModuleVisible(btn.module)).map((btn) => (
+                <button
+                  key={btn.module}
+                  onClick={() => setActiveModal(btn.modal)}
+                  className="flex flex-col items-start gap-2 bg-slate-50/50 hover:bg-teal-50 dark:bg-slate-850 dark:hover:bg-teal-950/20 p-4 border border-slate-200 dark:border-slate-800 rounded-2xl text-left transition-all duration-200 cursor-pointer"
+                >
+                  <btn.icon className={`h-5 w-5 ${btn.color}`} />
+                  <span className="font-bold text-xs text-slate-800 dark:text-white">{MODULE_LABELS[btn.module]}</span>
+                </button>
+              ))}
             </div>
           </div>
 

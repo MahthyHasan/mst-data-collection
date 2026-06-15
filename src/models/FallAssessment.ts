@@ -4,6 +4,7 @@ export interface IFallAssessment extends Document {
   patientId: mongoose.Types.ObjectId;
   campId: mongoose.Types.ObjectId;
   recordedBy: mongoose.Types.ObjectId;
+  stationLabel?: string;
   age65OrOlder: boolean;
   fallHistory6Months: boolean;
   takingFourOrMoreMedications: boolean;
@@ -23,6 +24,7 @@ const FallAssessmentSchema: Schema<IFallAssessment> = new Schema(
     patientId: { type: Schema.Types.ObjectId, ref: 'Patient', required: true, index: true },
     campId: { type: Schema.Types.ObjectId, ref: 'Camp', required: true },
     recordedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    stationLabel: { type: String, trim: true },
     age65OrOlder: { type: Boolean, default: false },
     fallHistory6Months: { type: Boolean, default: false },
     takingFourOrMoreMedications: { type: Boolean, default: false },

@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     await dbConnect();
     const body = await req.json();
 
-    const { patientId, campId, responses } = body;
+    const { patientId, campId, responses, stationLabel } = body;
 
     if (!patientId || !campId || !responses || !Array.isArray(responses) || responses.length !== 15) {
       return NextResponse.json({ error: 'Responses array of length 15 is required' }, { status: 400 });
@@ -29,6 +29,7 @@ export async function POST(req: Request) {
       patientId: new mongoose.Types.ObjectId(patientId),
       campId: new mongoose.Types.ObjectId(campId),
       recordedBy: new mongoose.Types.ObjectId(session.user.id),
+      stationLabel: stationLabel || undefined,
       responses,
       totalScore: score,
       classification,

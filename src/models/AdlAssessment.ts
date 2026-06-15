@@ -4,7 +4,8 @@ export interface IAdlAssessment extends Document {
   patientId: mongoose.Types.ObjectId;
   campId: mongoose.Types.ObjectId;
   recordedBy: mongoose.Types.ObjectId;
-  
+  stationLabel?: string;
+
   // Barthel Index items
   feeding: number;
   bathing: number;
@@ -27,6 +28,7 @@ const AdlAssessmentSchema: Schema<IAdlAssessment> = new Schema(
     patientId: { type: Schema.Types.ObjectId, ref: 'Patient', required: true, index: true },
     campId: { type: Schema.Types.ObjectId, ref: 'Camp', required: true },
     recordedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    stationLabel: { type: String, trim: true },
     feeding: { type: Number, required: true },
     bathing: { type: Number, required: true },
     grooming: { type: Number, required: true },
