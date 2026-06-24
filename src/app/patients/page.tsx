@@ -27,6 +27,7 @@ export default function PatientsPage() {
   const queryClient = useQueryClient();
   const [view, setView] = useState<'list' | 'register'>('list');
   const [step, setStep] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Search & Filter state
   const [search, setSearch] = useState('');
@@ -41,6 +42,39 @@ export default function PatientsPage() {
     setGender('');
     setAgeRange('');
     setCondition('');
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const params = new URLSearchParams();
+      // Apply whatever filters are currently active
+      if (search) params.append('search', search);
+      if (campId) params.append('campId', campId);
+      if (gender) params.append('gender', gender);
+      if (ageRange) params.append('ageRange', ageRange);
+      if (condition) params.append('condition', condition);
+      // Fetch ALL records — no pagination cap
+      params.append('limit', '10000');
+      params.append('page', '1');
+
+      const res = await fetch(`/api/patients?${params.toString()}`);
+      if (!res.ok) throw new Error('Failed to fetch patients for export');
+      const data = await res.json();
+      const allPatients = data.patients || [];
+
+      if (allPatients.length === 0) {
+        toast.error('No patients to export.');
+        return;
+      }
+
+      exportPatientsToExcel(allPatients);
+      toast.success(`Exported ${allPatients.length} patient records to Excel.`);
+    } catch (err: any) {
+      toast.error(err.message || 'Export failed.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Demographics (Step 1)
@@ -300,11 +334,12 @@ export default function PatientsPage() {
             </div>
             <div className="flex gap-3 self-start md:self-center">
               <button
-                onClick={() => exportPatientsToExcel(patients)}
-                className="flex items-center gap-2 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 shadow-sm cursor-pointer"
+                onClick={handleExport}
+                disabled={isExporting}
+                className="flex items-center gap-2 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <Download className="h-4.5 w-4.5" />
-                Export list
+                <Download className={`h-4.5 w-4.5 ${isExporting ? 'animate-bounce' : ''}`} />
+                {isExporting ? 'Exporting...' : 'Export list'}
               </button>
               <button
                 onClick={() => {
